@@ -3,8 +3,9 @@ package protosl
 import (
 	"errors"
 	"fmt"
-	"google.golang.org/protobuf/encoding/protowire"
 	"unicode/utf8"
+
+	"google.golang.org/protobuf/encoding/protowire"
 )
 
 var (
@@ -61,11 +62,11 @@ func Unmarshal(b []byte, msg Message) error {
 			}
 			subMsg := Message{}
 
+			// TODO support map,repeated
 			if utf8.Valid(d) { // string
 				msg[k] = string(d)
 			} else if err := Unmarshal(d, subMsg); err == nil { // embedded message
 				msg[k] = subMsg
-				// else if ... TODO repeated
 			} else { // bytes
 				msg[k] = d
 			}
