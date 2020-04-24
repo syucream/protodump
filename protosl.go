@@ -8,15 +8,49 @@ import (
 	"google.golang.org/protobuf/encoding/protowire"
 )
 
+const (
+	stringUnionKey  = "__string"
+	bytesUnionKey   = "__bytes"
+	packedUnionKey  = "__packed"
+	messageUnionKey = "__message"
+)
+
 var (
 	errReserved   = errors.New("cannot parse reserved wire type")
 	errDeprecated = errors.New("deprecated wire type")
 )
 
-type Message map[string]interface{}
+type Message map[int32]interface{}
 
-func getTag(num protowire.Number) string {
-	return fmt.Sprintf("__%d", num)
+type bytesUnion struct {
+	bytes []byte
+
+	string  string
+	packed  []interface{}
+	message Message
+}
+
+func newBytesUnion(b []byte) *bytesUnion {
+	return &bytesUnion{
+		bytes: b,
+	}
+}
+func (b *bytesUnion) value() interface{} {
+	rv := map[string]interface{}{
+		bytesUnionKey: b.bytes,
+	}
+
+	if b.string != "" {
+		rv[stringUnionKey] = b.string
+	}
+	if b.packed != nil {
+		rv[packedUnionKey] = b.packed
+	}
+	if b.message != nil {
+		rv[messageUnionKey] = b.message
+	}
+
+	return rv
 }
 
 func Unmarshal(b []byte, msg Message) error {
@@ -28,49 +62,42 @@ func Unmarshal(b []byte, msg Message) error {
 		}
 		b = b[tagLen:]
 
-		k := getTag(num)
+		var v interface{}
+		n := -1
 
 		switch wtyp {
 		case protowire.VarintType:
-			v, n := protowire.ConsumeVarint(b)
-			if err := protowire.ParseError(n); err != nil {
-				return err
-			}
-			msg[k] = v
-			b = b[n:]
+			v, n = protowire.ConsumeVarint(b)
 
 		case protowire.Fixed32Type:
-			v, n := protowire.ConsumeFixed32(b)
-			if err := protowire.ParseError(n); err != nil {
-				return err
-			}
-			msg[k] = v
-			b = b[n:]
+			v, n = protowire.ConsumeFixed32(b)
 
 		case protowire.Fixed64Type:
-			v, n := protowire.ConsumeFixed64(b)
-			if err := protowire.ParseError(n); err != nil {
-				return err
-			}
-			msg[k] = v
-			b = b[n:]
+			v, n = protowire.ConsumeFixed64(b)
 
 		case protowire.BytesType:
-			d, n := protowire.ConsumeBytes(b)
-			if err := protowire.ParseError(n); err != nil {
+			d, dl := protowire.ConsumeBytes(b)
+			if err := protowire.ParseError(dl); err != nil {
 				return err
 			}
-			subMsg := Message{}
 
-			// TODO support map,repeated
-			if utf8.Valid(d) { // string
-				msg[k] = string(d)
-			} else if err := Unmarshal(d, subMsg); err == nil { // embedded message
-				msg[k] = subMsg
-			} else { // bytes
-				msg[k] = d
+			union := newBytesUnion(d)
+
+			subMsg := Message{}
+			if err := Unmarshal(d, subMsg); err == nil { // embedded message
+				union.message = subMsg
 			}
-			b = b[n:]
+
+			if packed, err := extractPacked(d); err == nil { // packed repeated
+				union.packed = packed
+			}
+
+			if utf8.Valid(d) { // string
+				union.string = string(d)
+			}
+
+			n = dl
+			v = union.value()
 
 		case protowire.StartGroupType:
 			// https://developers.google.com/protocol-buffers/docs/encoding#structure
@@ -83,7 +110,60 @@ func Unmarshal(b []byte, msg Message) error {
 		default:
 			return errReserved
 		}
+
+		if err := protowire.ParseError(n); err != nil {
+			return err
+		}
+
+		// If the value appears twice or uppper, wrap it by slice
+		k := int32(num)
+		if e, ok := msg[k]; ok {
+			switch vv := e.(type) {
+			case []interface{}:
+				msg[k] = append(vv, v)
+			default:
+				msg[k] = []interface{}{vv, v}
+			}
+		} else {
+			msg[k] = v
+		}
+
+		b = b[n:]
 	}
 
 	return nil
+}
+
+func extractPacked(b []byte) ([]interface{}, error) {
+	rv := []interface{}{}
+
+	for len(b) > 0 {
+		var v interface{}
+		n := -1
+
+		v, n = protowire.ConsumeVarint(b)
+		if err := protowire.ParseError(n); err == nil {
+			rv = append(rv, v)
+			b = b[n:]
+			continue
+		}
+
+		v, n = protowire.ConsumeFixed32(b)
+		if err := protowire.ParseError(n); err == nil {
+			rv = append(rv, v)
+			b = b[n:]
+			continue
+		}
+
+		v, n = protowire.ConsumeFixed64(b)
+		if err := protowire.ParseError(n); err == nil {
+			rv = append(rv, v)
+			b = b[n:]
+			continue
+		}
+
+		return nil, fmt.Errorf("non packed repeated numeric")
+	}
+
+	return rv, nil
 }

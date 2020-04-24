@@ -9,10 +9,13 @@ A protobuf schema-less module.
 
 ```sh
 $ echo -n "\x12\x07\x74\x65\x73\x74\x69\x6e\x67" | base64 | protosl
-{"__2":"testing"}
+{"2":{"__bytes":"dGVzdGluZw==","__packed":[116,101,115,116,105,110,103],"__string":"testing"}}
 ```
 
 ## TODO
 
-- Support repeated reputation type
 - Support map type
+
+## Limitation
+
+- `repeated fixed??` types will not be recognized correctly

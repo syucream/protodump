@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+message Example {
+    enum Num {
+        ZERO = 0;
+        ONE = 1;
+    }
+
+    uint64 uint64_val = 1;
+    string string_val = 2;
+    fixed64 fixed64_val = 3;
+    fixed32 fixed32_val = 4;
+    Num enum_val = 5;
+    Child child_val = 6;
+
+    repeated uint64 r_uint64_val = 101;
+    repeated string r_string_val = 102;
+    repeated fixed64 r_fixed64_val = 103;
+    repeated fixed32 r_fixed32_val = 104;
+    repeated Num r_enum_val = 105;
+    repeated Child r_child_val = 106;
+}
+
+message Child {
+    uint64 v = 1;
+}
