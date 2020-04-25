@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,13 +16,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bin, err := base64.StdEncoding.DecodeString(string(in))
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	msg := protosl.Message{}
-	err = protosl.Unmarshal(bin, msg)
+	err = protosl.Unmarshal(in, msg)
 	if err != nil {
 		log.Fatal(err)
 	}
