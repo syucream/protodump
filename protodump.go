@@ -78,7 +78,7 @@ func Unmarshal(b []byte, msg Message) error {
 		case protowire.BytesType:
 			d, dl := protowire.ConsumeBytes(b)
 			if err := protowire.ParseError(dl); err != nil {
-				return err
+				return fmt.Errorf("wire type %v, field number %v caused : %w", wtyp, num, err)
 			}
 
 			union := newBytesUnion(d)
@@ -101,18 +101,18 @@ func Unmarshal(b []byte, msg Message) error {
 
 		case protowire.StartGroupType:
 			// https://developers.google.com/protocol-buffers/docs/encoding#structure
-			return errDeprecated
+			return fmt.Errorf("wire type %v, field number %v caused : %w", wtyp, num, errDeprecated)
 
 		case protowire.EndGroupType:
 			// https://developers.google.com/protocol-buffers/docs/encoding#structure
-			return errDeprecated
+			return fmt.Errorf("wire type %v, field number %v caused : %w", wtyp, num, errDeprecated)
 
 		default:
-			return errReserved
+			return fmt.Errorf("wire type %v, field number %v caused : %w", wtyp, num, errReserved)
 		}
 
 		if err := protowire.ParseError(n); err != nil {
-			return err
+			return fmt.Errorf("wire type %v, field number %v caused : %w", wtyp, num, err)
 		}
 
 		// If the value appears twice or uppper, wrap it by slice
