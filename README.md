@@ -1,10 +1,20 @@
 # protodump
 
-A protobuf schema-less module.
+A protobuf schema-less dumper.
 
 ## Summary
 
 [Protocol Buffer Wire Format](https://developers.google.com/protocol-buffers/docs/encoding) is super simple and contains wire type in each field. Generally it expects descriptors on marshaler/unmarshaler but this module provides unmarshaler without descriptors. It should help you if you have unknown/broken binary and hope to search correct descriptors from seeing actual values.
+
+## How to install
+
+```sh
+# entire
+$ go get github.com/syucream/protodump
+
+# cli
+$ go get github.com/syucream/protodump/cmd/protodump
+```
 
 ## How to use
 

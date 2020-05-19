@@ -11,7 +11,16 @@ import (
 )
 
 func main() {
-	in, err := ioutil.ReadAll(os.Stdin)
+	var in []byte
+	var err error
+
+	if len(os.Args) >= 2 {
+		// filename by arg1
+		in, err = ioutil.ReadFile(os.Args[1])
+	} else {
+		// stdin
+		in, err = ioutil.ReadAll(os.Stdin)
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
