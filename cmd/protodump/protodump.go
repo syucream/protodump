@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/syucream/protosl"
+	"github.com/syucream/protodump"
 )
 
 func main() {
@@ -16,8 +16,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msg := protosl.Message{}
-	err = protosl.Unmarshal(in, msg)
+	msg := protodump.Message{}
+	err = protodump.Unmarshal(in, msg)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,4 +1,4 @@
-module github.com/syucream/protosl
+module github.com/syucream/protodump
 
 go 1.13
 

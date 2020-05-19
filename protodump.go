@@ -1,4 +1,4 @@
-package protosl
+package protodump
 
 import (
 	"errors"

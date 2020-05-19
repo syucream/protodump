@@ -1,4 +1,4 @@
-package protosl
+package protodump
 
 import (
 	"io"
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	protosl "github.com/syucream/protosl/internal"
+	protodump "github.com/syucream/protodump/internal"
 )
 
 func TestUnmarshal(t *testing.T) {
@@ -87,21 +87,21 @@ func TestUnmarshal(t *testing.T) {
 		// Complex
 		{
 			data: func() []byte {
-				msg := &protosl.Example{
+				msg := &protodump.Example{
 					Uint64Val:  1,
 					StringVal:  "testing",
 					Fixed64Val: 11,
 					Fixed32Val: 111,
-					EnumVal:    protosl.Example_ONE,
-					ChildVal: &protosl.Child{
+					EnumVal:    protodump.Example_ONE,
+					ChildVal: &protodump.Child{
 						V: 1,
 					},
 					RUint64Val: []uint64{2, 3},
 					RStringVal: []string{"aaa", "bbb"},
 					// RFixed64Val: []uint64{22, 33}, TODO repeated fixed isn't supported
 					// RFixed32Val: []uint32{222, 333}, TODO repeated fixed isn't supported
-					REnumVal: []protosl.Example_Num{protosl.Example_ZERO, protosl.Example_ONE},
-					RChildVal: []*protosl.Child{
+					REnumVal: []protodump.Example_Num{protodump.Example_ZERO, protodump.Example_ONE},
+					RChildVal: []*protodump.Child{
 						{
 							V: 2,
 						},
